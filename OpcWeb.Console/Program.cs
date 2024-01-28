@@ -1,0 +1,20 @@
+﻿using System.Diagnostics;
+using OpcUaClient;
+
+var sw = new Stopwatch();
+sw.Start();
+using var opcUaClient = new SimpleClient("ConsoleBrowser", "opc.tcp://192.168.2.21:4840");
+sw.Stop();
+var configuredIn = sw.ElapsedMilliseconds;
+Console.WriteLine($"Configuring finished in {configuredIn}ms");
+sw.Start();
+opcUaClient.Connect();
+sw.Stop();
+var connectedIn = sw.ElapsedMilliseconds;
+Console.WriteLine($"Connecting finished in {connectedIn}ms");
+sw.Start();
+opcUaClient.Browse();
+sw.Stop();
+var browsedIn = sw.ElapsedMilliseconds;
+Console.WriteLine($"Browsing finished in {browsedIn}ms");
+Console.WriteLine($"Configure: {configuredIn}ms; Connect: {connectedIn}ms; Browse: {browsedIn}ms; ");
