@@ -15,6 +15,7 @@ public class SimpleClient : IDisposable
   private EndpointDescription? _selectedEndpoint;
   private Session? _session;
   private long _browsedNodes;
+  public List<Node> Nodes { get; set; } = [];
 
   public SimpleClient(string applicationName, string discoveryUrl)
   {
@@ -86,7 +87,9 @@ public class SimpleClient : IDisposable
     try
     {
       Console.WriteLine("DisplayName: BrowseName, NodeClass, NodeId");
-      BrowseAllChildren(ObjectIds.ObjectsFolder);
+      var nodes = new List<Node>();
+      BrowseAllChildren(ObjectIds.ObjectsFolder, ref nodes);
+      Nodes = nodes;
     }
     catch (Exception e)
     {
@@ -96,20 +99,33 @@ public class SimpleClient : IDisposable
     return _browsedNodes;
   }
 
-  private void BrowseAllChildren(NodeId nodeId, int level = 0)
+  private void BrowseAllChildren(NodeId nodeId, ref List<Node> children, int level = 0)
   {
     if (_session is not { Connected: true })
     {
       Console.WriteLine("Session is not connected!");
       return;
     }
+
+    var currentLevel = level + 1;
     var refs = BrowseReferenceDescriptions(nodeId);
     if (refs == null) return;
     foreach (var rd in refs)
     {
       _browsedNodes++;
+      
       Console.WriteLine($"{(level > 0 ? new string('+', level) : "")} {rd.DisplayName}: {rd.BrowseName}, {rd.NodeClass}, {rd.NodeId}");
-      BrowseAllChildren(ExpandedNodeId.ToNodeId(rd.NodeId, _session.NamespaceUris), level++);
+      var currentNode = new Node
+      {
+        DisplayName = rd.DisplayName.ToString(),
+        BrowseName = rd.BrowseName.ToString(),
+        NodeClass = rd.NodeClass.ToString(),
+        NodeId = ExpandedNodeId.ToNodeId(rd.NodeId, _session.NamespaceUris).ToString()
+      };
+      children.Add(currentNode);
+      var currentChildren = new List<Node>();
+      BrowseAllChildren(ExpandedNodeId.ToNodeId(rd.NodeId, _session.NamespaceUris), ref currentChildren, currentLevel);
+      currentNode.Children = currentChildren;
     }
   }
   
@@ -120,8 +136,17 @@ public class SimpleClient : IDisposable
       Console.WriteLine("Session is not connected!");
       return null;
     }
-    _session.Browse(null, null, nodeId, 0u, BrowseDirection.Forward, ReferenceTypeIds.HierarchicalReferences, true, (uint)NodeClass.Variable | (uint)NodeClass.Object | (uint)NodeClass.Method, out _, out var referenceDescriptions);
-    return referenceDescriptions;
+
+    try
+    {
+      _session.Browse(null, null, nodeId, 0u, BrowseDirection.Forward, ReferenceTypeIds.HierarchicalReferences, true, (uint)NodeClass.Variable | (uint)NodeClass.Object | (uint)NodeClass.Method, out _, out var referenceDescriptions);
+      return referenceDescriptions;
+    }
+    catch (ServiceResultException e)
+    {
+      Console.WriteLine(e);
+      return null;
+    }
   }
 
   public void Dispose()
