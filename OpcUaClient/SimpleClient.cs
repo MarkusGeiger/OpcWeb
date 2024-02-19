@@ -31,7 +31,7 @@ public class SimpleClient : IDisposable
       ApplicationType = ApplicationType.Client,
       SecurityConfiguration = new SecurityConfiguration
       {
-        ApplicationCertificate = new CertificateIdentifier { StoreType = @"Directory", StorePath = Path.Combine(certificateStorePath, "MachineDefault"), SubjectName = "BatchPlantClient" },
+        ApplicationCertificate = new CertificateIdentifier { StoreType = @"Directory", StorePath = Path.Combine(certificateStorePath, "MachineDefault"), SubjectName = applicationName + "Client" },
         TrustedIssuerCertificates = new CertificateTrustList { StoreType = @"Directory", StorePath = Path.Combine(certificateStorePath, "UA Certificate Authorities") },
         TrustedPeerCertificates = new CertificateTrustList { StoreType = @"Directory", StorePath = Path.Combine(certificateStorePath, "UA Applications") },
         RejectedCertificateStore = new CertificateTrustList { StoreType = @"Directory", StorePath = Path.Combine(certificateStorePath, "RejectedCertificates") },
@@ -51,7 +51,7 @@ public class SimpleClient : IDisposable
 
     var application = new ApplicationInstance
     {
-      ApplicationName = "BatchPlantClient",
+      ApplicationName = applicationName + "Client",
       ApplicationType = ApplicationType.Client,
       ApplicationConfiguration = _config
     };
@@ -63,9 +63,54 @@ public class SimpleClient : IDisposable
   {
     try
     {
-      _selectedEndpoint = CoreClientUtils.SelectEndpoint(_discoveryUrl, useSecurity: true);
+      var discoverTimeout = CoreClientUtils.DefaultDiscoverTimeout;
+      var useSecurity = false;
+      
+      //var identity = new UserIdentity("username", "password");
+      IUserIdentity? identity = null;
+      // _selectedEndpoint = CoreClientUtils.SelectEndpoint(_config, _discoveryUrl, useSecurity: false);
+      // _selectedEndpoint = CoreClientUtils.SelectEndpoint(_discoveryUrl, useSecurity: false);
+      EndpointDescription _selectedEndpoint;
+      
+      
+      var uri = CoreClientUtils.GetDiscoveryUrl(_discoveryUrl);
+      var endpointConfiguration = EndpointConfiguration.Create();
+      endpointConfiguration.OperationTimeout = discoverTimeout;
+
+      using (var client = DiscoveryClient.Create(_config, uri, endpointConfiguration))
+      {
+        // Connect to the server's discovery endpoint and find the available configuration.
+        Uri url = new Uri(client.Endpoint.EndpointUrl);
+        var endpoints = client.GetEndpoints(null);
+        foreach (var endpoint in endpoints) 
+        {
+          Console.WriteLine($"Available Endpoint:  {Utils.Format(
+            "{0} - [{1}:{2}]",
+            endpoint.EndpointUrl,
+            endpoint.SecurityMode,
+            SecurityPolicies.GetDisplayName(endpoint.SecurityPolicyUri))}");
+        }
+        var selectedEndpoint = CoreClientUtils.SelectEndpoint(url, endpoints, useSecurity);
+
+        Uri endpointUrl = Utils.ParseUri(selectedEndpoint.EndpointUrl);
+        if (endpointUrl != null && endpointUrl.Scheme == uri.Scheme)
+        {
+          UriBuilder builder = new UriBuilder(endpointUrl);
+          builder.Host = uri.DnsSafeHost;
+          builder.Port = uri.Port;
+          selectedEndpoint.EndpointUrl = builder.ToString();
+        }
+
+        _selectedEndpoint = selectedEndpoint;
+      }
+      
+      
+      
+      Console.WriteLine($"Selected Endpoint:   {_selectedEndpoint.EndpointUrl} - [{_selectedEndpoint.SecurityMode}:{SecurityPolicies.GetDisplayName(_selectedEndpoint.SecurityPolicyUri)}]");
       var configuredEndpoint = new ConfiguredEndpoint(null, _selectedEndpoint, EndpointConfiguration.Create(_config));
-      var sessionTask = Session.Create(_config, configuredEndpoint, false, "", 60000, null, null);
+      Console.WriteLine("======================");
+      Console.WriteLine($"Configured Endpoint: {configuredEndpoint}");
+      var sessionTask = Session.Create(_config, configuredEndpoint, false, "TestSession", 60000, identity, null);
       _session = sessionTask.GetAwaiter().GetResult();
     }
     catch (Exception e)

@@ -5,7 +5,8 @@ using OpcUaClient;
 
 var sw = new Stopwatch();
 sw.Restart();
-using var opcUaClient = new SimpleClient("ConsoleBrowser", "opc.tcp://192.168.2.21:4840");
+//using var opcUaClient = new SimpleClient("ConsoleBrowser", "opc.tcp://localhost:50000");
+using var opcUaClient = new SimpleClient("ConsoleBrowser", "opc.tcp://localhost:4840");
 sw.Stop();
 var configuredIn = sw.ElapsedMilliseconds;
 Console.WriteLine($"Configuring finished in {configuredIn}ms");
