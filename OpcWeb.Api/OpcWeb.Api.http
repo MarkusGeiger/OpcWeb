@@ -1,0 +1,6 @@
+@OpcWeb.Api_HostAddress = http://localhost:5075
+
+GET {{OpcWeb.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

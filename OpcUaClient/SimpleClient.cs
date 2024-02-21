@@ -12,7 +12,6 @@ public class SimpleClient : IDisposable
 {
   private readonly string _discoveryUrl;
   private readonly ApplicationConfiguration _config;
-  private EndpointDescription? _selectedEndpoint;
   private Session? _session;
   private long _browsedNodes;
   public List<Node> Nodes { get; set; } = [];
@@ -59,55 +58,18 @@ public class SimpleClient : IDisposable
     application.CheckApplicationInstanceCertificate(false, 2048).GetAwaiter().GetResult();
   }
 
-  public void Connect()
+  public void Connect(string username = "", string password = "", bool useSecurity = false)
   {
     try
     {
-      var discoverTimeout = CoreClientUtils.DefaultDiscoverTimeout;
-      var useSecurity = false;
-      
-      //var identity = new UserIdentity("username", "password");
       IUserIdentity? identity = null;
-      // _selectedEndpoint = CoreClientUtils.SelectEndpoint(_config, _discoveryUrl, useSecurity: false);
-      // _selectedEndpoint = CoreClientUtils.SelectEndpoint(_discoveryUrl, useSecurity: false);
-      EndpointDescription _selectedEndpoint;
-      
-      
-      var uri = CoreClientUtils.GetDiscoveryUrl(_discoveryUrl);
-      var endpointConfiguration = EndpointConfiguration.Create();
-      endpointConfiguration.OperationTimeout = discoverTimeout;
-
-      using (var client = DiscoveryClient.Create(_config, uri, endpointConfiguration))
+      if (!string.IsNullOrWhiteSpace(username) && !string.IsNullOrWhiteSpace(password))
       {
-        // Connect to the server's discovery endpoint and find the available configuration.
-        Uri url = new Uri(client.Endpoint.EndpointUrl);
-        var endpoints = client.GetEndpoints(null);
-        foreach (var endpoint in endpoints) 
-        {
-          Console.WriteLine($"Available Endpoint:  {Utils.Format(
-            "{0} - [{1}:{2}]",
-            endpoint.EndpointUrl,
-            endpoint.SecurityMode,
-            SecurityPolicies.GetDisplayName(endpoint.SecurityPolicyUri))}");
-        }
-        var selectedEndpoint = CoreClientUtils.SelectEndpoint(url, endpoints, useSecurity);
-
-        Uri endpointUrl = Utils.ParseUri(selectedEndpoint.EndpointUrl);
-        if (endpointUrl != null && endpointUrl.Scheme == uri.Scheme)
-        {
-          UriBuilder builder = new UriBuilder(endpointUrl);
-          builder.Host = uri.DnsSafeHost;
-          builder.Port = uri.Port;
-          selectedEndpoint.EndpointUrl = builder.ToString();
-        }
-
-        _selectedEndpoint = selectedEndpoint;
+        identity = new UserIdentity(username, password);
       }
-      
-      
-      
-      Console.WriteLine($"Selected Endpoint:   {_selectedEndpoint.EndpointUrl} - [{_selectedEndpoint.SecurityMode}:{SecurityPolicies.GetDisplayName(_selectedEndpoint.SecurityPolicyUri)}]");
-      var configuredEndpoint = new ConfiguredEndpoint(null, _selectedEndpoint, EndpointConfiguration.Create(_config));
+      //var identity = new UserIdentity("username", "password");
+      var selectedEndpoint = GetEndpoint(useSecurity);
+      var configuredEndpoint = new ConfiguredEndpoint(null, selectedEndpoint, EndpointConfiguration.Create(_config));
       Console.WriteLine("======================");
       Console.WriteLine($"Configured Endpoint: {configuredEndpoint}");
       var sessionTask = Session.Create(_config, configuredEndpoint, false, "TestSession", 60000, identity, null);
@@ -117,6 +79,56 @@ public class SimpleClient : IDisposable
     {
       Console.WriteLine($"Failed to initialize session: {e}");
     }
+  }
+
+  public EndpointDescriptionCollection GetEndpoints()
+  {
+    var discoverTimeout = CoreClientUtils.DefaultDiscoverTimeout;
+      
+    var uri = CoreClientUtils.GetDiscoveryUrl(_discoveryUrl);
+    var endpointConfiguration = EndpointConfiguration.Create();
+    endpointConfiguration.OperationTimeout = discoverTimeout;
+
+    using var client = DiscoveryClient.Create(_config, uri, endpointConfiguration);
+    
+    // Connect to the server's discovery endpoint and find the available configuration.
+    Uri url = new Uri(client.Endpoint.EndpointUrl);
+    return client.GetEndpoints(null);
+  }
+  
+  private EndpointDescription GetEndpoint(bool useSecurity)
+  {
+    // _selectedEndpoint = CoreClientUtils.SelectEndpoint(_config, _discoveryUrl, useSecurity: false);
+    // _selectedEndpoint = CoreClientUtils.SelectEndpoint(_discoveryUrl, useSecurity: false);
+
+    var discoverTimeout = CoreClientUtils.DefaultDiscoverTimeout;
+      
+    var uri = CoreClientUtils.GetDiscoveryUrl(_discoveryUrl);
+    var endpointConfiguration = EndpointConfiguration.Create();
+    endpointConfiguration.OperationTimeout = discoverTimeout;
+
+    using var client = DiscoveryClient.Create(_config, uri, endpointConfiguration);
+    
+    // Connect to the server's discovery endpoint and find the available configuration.
+    Uri url = new Uri(client.Endpoint.EndpointUrl);
+    var endpoints = client.GetEndpoints(null);
+    foreach (var endpoint in endpoints) 
+    {
+      Console.WriteLine($"Available Endpoint:  {EndpointDescriptionHelper.FormatToString(endpoint)}");
+    }
+    var selectedEndpoint = CoreClientUtils.SelectEndpoint(url, endpoints, useSecurity);
+
+    Uri endpointUrl = Utils.ParseUri(selectedEndpoint.EndpointUrl);
+    if (endpointUrl != null && endpointUrl.Scheme == uri.Scheme)
+    {
+      UriBuilder builder = new UriBuilder(endpointUrl);
+      builder.Host = uri.DnsSafeHost;
+      builder.Port = uri.Port;
+      selectedEndpoint.EndpointUrl = builder.ToString();
+    }
+
+    Console.WriteLine($"Selected Endpoint:   {selectedEndpoint.EndpointUrl} - [{selectedEndpoint.SecurityMode}:{SecurityPolicies.GetDisplayName(selectedEndpoint.SecurityPolicyUri)}]");
+    return selectedEndpoint;
   }
 
   public long Browse()
