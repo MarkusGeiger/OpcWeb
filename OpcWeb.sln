@@ -6,6 +6,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpcUaClient", "OpcUaClient\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpcWeb.Api", "OpcWeb.Api\OpcWeb.Api.csproj", "{C6952475-F383-40E9-8690-31F92CFCAD8B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpcUaServer", "OpcUaServer\OpcUaServer.csproj", "{1598C5E5-9C1D-425B-A96C-F460811EB644}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpcUaTests", "OpcUaTests\OpcUaTests.csproj", "{64F7B3F9-C920-468E-9C34-532E0DCB2B74}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +28,13 @@ Global
 		{C6952475-F383-40E9-8690-31F92CFCAD8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C6952475-F383-40E9-8690-31F92CFCAD8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C6952475-F383-40E9-8690-31F92CFCAD8B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1598C5E5-9C1D-425B-A96C-F460811EB644}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1598C5E5-9C1D-425B-A96C-F460811EB644}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1598C5E5-9C1D-425B-A96C-F460811EB644}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1598C5E5-9C1D-425B-A96C-F460811EB644}.Release|Any CPU.Build.0 = Release|Any CPU
+		{64F7B3F9-C920-468E-9C34-532E0DCB2B74}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{64F7B3F9-C920-468E-9C34-532E0DCB2B74}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{64F7B3F9-C920-468E-9C34-532E0DCB2B74}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{64F7B3F9-C920-468E-9C34-532E0DCB2B74}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

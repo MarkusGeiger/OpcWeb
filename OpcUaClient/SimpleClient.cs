@@ -81,6 +81,11 @@ public class SimpleClient : IDisposable
     }
   }
 
+  public bool IsConnected()
+  {
+    return _session?.Connected ?? false;
+  }
+
   public EndpointDescriptionCollection GetEndpoints()
   {
     var discoverTimeout = CoreClientUtils.DefaultDiscoverTimeout;
@@ -117,7 +122,7 @@ public class SimpleClient : IDisposable
       Console.WriteLine($"Available Endpoint:  {EndpointDescriptionHelper.FormatToString(endpoint)}");
     }
     var selectedEndpoint = CoreClientUtils.SelectEndpoint(url, endpoints, useSecurity);
-
+    
     Uri endpointUrl = Utils.ParseUri(selectedEndpoint.EndpointUrl);
     if (endpointUrl != null && endpointUrl.Scheme == uri.Scheme)
     {

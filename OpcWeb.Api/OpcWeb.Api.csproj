@@ -16,4 +16,9 @@
       <ProjectReference Include="..\OpcUaClient\OpcUaClient.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Remove="OPC_Foundation\CertificateStores\MachineDefault\private\testClient [DFF8502A49E59684128D77D053DB6B7F565C5F8B].pfx" />
+      <None Remove="OPC_Foundation\CertificateStores\MachineDefault\certs\testClient [DFF8502A49E59684128D77D053DB6B7F565C5F8B].der" />
+    </ItemGroup>
+
 </Project>
